@@ -465,11 +465,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/neverdark/Documents/APIs/Logging/API/Logging.csproj",
+      "projectUniqueName": "/Users/neverdark/HomeAutomation/Logging/API/Logging.csproj",
       "projectName": "Logging",
-      "projectPath": "/Users/neverdark/Documents/APIs/Logging/API/Logging.csproj",
+      "projectPath": "/Users/neverdark/HomeAutomation/Logging/API/Logging.csproj",
       "packagesPath": "/Users/neverdark/.nuget/packages/",
-      "outputPath": "/Users/neverdark/Documents/APIs/Logging/API/obj/",
+      "outputPath": "/Users/neverdark/HomeAutomation/Logging/API/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/neverdark/.nuget/NuGet/NuGet.Config"

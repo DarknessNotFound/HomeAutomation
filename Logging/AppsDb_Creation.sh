@@ -1,14 +1,24 @@
 #!/bin/bash
 
-# Move into the Dbs folder
-if ! [[ -d ./Dbs ]]
+# Move into the Databases folder
+if ! [[ -d ./Databases ]]
 then
-    echo "Dbs doesn't exist, creating ./Dbs"
-    mkdir Dbs
+    echo "Logging folder doesn't exist, creating ../Databases"
+    mkdir Databases
 else
-    echo "./Dbs exists"
+    echo "./Databases exists"
 fi
-cd ./Dbs
+cd ./Databases
+
+# Move into the Dbs folder
+if ! [[ -d ./Logging ]]
+then
+    echo "Logging folder doesn't exist, creating ./Logging"
+    mkdir Logging
+else
+    echo "../Databases/Logging exists"
+fi
+cd ./Logging
 
 # Apps.db database sqlite3 connection.
 touch ./Apps.db
@@ -32,5 +42,5 @@ CREATE TABLE IF NOT EXISTS ApiKeys(
 "
 
 echo "$AppTable" | $db
-echo "$APIKeysTable" | $dbx
+echo "$APIKeysTable" | $db
 echo "Finished creating the Apps.db"
