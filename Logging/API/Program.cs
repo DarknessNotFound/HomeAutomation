@@ -1,3 +1,5 @@
+using System.Data.SQLite;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
