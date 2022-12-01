@@ -38,7 +38,15 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
+            "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Microsoft.Data.Sqlite": {
               "target": "Package",
               "version": "[7.0.0, )"
             },

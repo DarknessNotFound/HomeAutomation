@@ -1,5 +1,3 @@
-using System.Data.SQLite;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -23,6 +21,14 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
+var TestErrors = new[] 
+{
+    new Logs.Error("Program.cs", "TestErrors", "Error 1"),
+    new Logs.Error("Program.cs", "TestErrors", "Error 2"),
+    new Logs.Error("Program.cs", "TestErrors", "Error 3"),
+    new Logs.Error("Program.cs", "TestErrors", "Error 4")
+};
+
 app.MapGet("/weatherforecast", () =>
 {
     var forecast =  Enumerable.Range(1, 5).Select(index =>
@@ -38,9 +44,27 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
+app.MapGet("/Error/GetAll", () => 
+{ 
+    var result = Enumerable.Range(0, TestErrors.Length).Select(index =>
+        TestErrors[index].ToRec()
+        // new ErrorRec
+        // (
+        //     TestErrors[index].Id,
+        //     TestErrors[index].File,
+        //     TestErrors[index].Function,
+        //     TestErrors[index].Message
+        // )
+    ).ToArray();
+    return result; 
+})
+.WithName("GetAllErrors")
+.WithOpenApi();
+
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
