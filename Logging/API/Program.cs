@@ -1,3 +1,45 @@
+using Microsoft.Data.Sqlite;
+
+//Setup the database.
+List<string> TablesSql = new List<string>();
+#region 
+TablesSql.Add("""
+CREATE TABLE IF NOT EXISTS ApiKeys(
+   Id INTEGER PRIMARY KEY AUTOINCREMENT,
+   Name     TEXT     NOT NULL,
+   KEY      TEXT     NOT NULL,
+   IsDeleted BOOLEAN NOT NULL CHECK (IsDeleted IN (0, 1)) DEFAULT 0
+);
+""");
+
+TablesSql.Add($"""
+CREATE TABLE IF NOT EXISTS {Logs.Error.Table}(
+   Id INTEGER PRIMARY KEY AUTOINCREMENT,
+   Program        INTEGER   NOT NULL,
+   File           TEXT      NULL,
+   Function       TEXT      NULL,
+   Message        TEXT      NULL
+);
+""");
+#endregion
+
+using (var connection = new SqliteConnection(Constants.Conn))
+{
+    connection.Open();
+    var command = connection.CreateCommand();
+    foreach(string Table in TablesSql)
+    {
+        command.CommandText = Table;
+        command.ExecuteNonQuery();
+    }
+
+    Console.WriteLine("Admin API Key: NOT IMPLEMENTED");
+}
+
+var TestError = new Logs.Error("Program.cs", "Main", "This is a test message.");
+TestError.Insert(1);
+
+//API stuff
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,58 +55,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.MapGet("/", () => "Logging pinged successful!");
 
-var TestErrors = new[] 
-{
-    new Logs.Error("Program.cs", "TestErrors", "Error 1"),
-    new Logs.Error("Program.cs", "TestErrors", "Error 2"),
-    new Logs.Error("Program.cs", "TestErrors", "Error 3"),
-    new Logs.Error("Program.cs", "TestErrors", "Error 4")
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-app.MapGet("/Error/GetAll", () => 
-{ 
-    var result = Enumerable.Range(0, TestErrors.Length).Select(index =>
-        TestErrors[index].ToRec()
-        // new ErrorRec
-        // (
-        //     TestErrors[index].Id,
-        //     TestErrors[index].File,
-        //     TestErrors[index].Function,
-        //     TestErrors[index].Message
-        // )
-    ).ToArray();
-    return result; 
-})
-.WithName("GetAllErrors")
-.WithOpenApi();
+app.MapGet("/Errors", () => {
+    return Logs.Error.GetAllErrors().Select(error => error.ToRec()).ToArray();
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
-
