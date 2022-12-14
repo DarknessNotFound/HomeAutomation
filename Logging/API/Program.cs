@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 
+chdir("/data");
 //Setup the database.
 List<string> TablesSql = new List<string>();
 #region 
