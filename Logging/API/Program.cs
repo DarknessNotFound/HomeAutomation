@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS {Logs.Error.Table}(
 );
 """);
 #endregion
-
 Console.WriteLine(Constants.Conn);
 Console.WriteLine(System.IO.Directory.GetCurrentDirectory());
 using (var connection = new SqliteConnection(Constants.Conn))
