@@ -1,6 +1,17 @@
 using Microsoft.Data.Sqlite;
+using System.IO;
 
-chdir("/data");
+string target = Directory.GetCurrentDirectory() + "/data";
+Console.WriteLine("The current directory is {0}", path);
+if (!Directory.Exists(target))
+{
+    Directory.CreateDirectory(target);
+}
+
+// Change the current directory.
+Environment.CurrentDirectory = (target);
+Console.WriteLine("Now, the current directory is {0}", path);
+
 //Setup the database.
 List<string> TablesSql = new List<string>();
 #region 
@@ -23,8 +34,6 @@ CREATE TABLE IF NOT EXISTS {Logs.Error.Table}(
 );
 """);
 #endregion
-Console.WriteLine(Constants.Conn);
-Console.WriteLine(System.IO.Directory.GetCurrentDirectory());
 using (var connection = new SqliteConnection(Constants.Conn))
 {
     connection.Open();
