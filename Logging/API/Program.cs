@@ -2,7 +2,7 @@ using Microsoft.Data.Sqlite;
 using System.IO;
 
 string target = Directory.GetCurrentDirectory() + "/data";
-Console.WriteLine("The current directory is {0}", path);
+Console.WriteLine("The current directory is {0}", Directory.GetCurrentDirectory());
 if (!Directory.Exists(target))
 {
     Directory.CreateDirectory(target);
@@ -10,7 +10,7 @@ if (!Directory.Exists(target))
 
 // Change the current directory.
 Environment.CurrentDirectory = (target);
-Console.WriteLine("Now, the current directory is {0}", path);
+Console.WriteLine("Now, the current directory is {0}", Directory.GetCurrentDirectory());
 
 //Setup the database.
 List<string> TablesSql = new List<string>();
