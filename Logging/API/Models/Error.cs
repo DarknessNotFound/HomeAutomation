@@ -65,7 +65,7 @@ namespace Logs
         public static List<Error> GetAllErrors()
         {
             var Result = new List<Error>();
-            string Query = $"SELECT * FROM {Table}";
+            string Query = $"SELECT * FROM {Table};";
 
             using (var connection = new SqliteConnection(Constants.Conn))
             {

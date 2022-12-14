@@ -2,7 +2,6 @@ using Microsoft.Data.Sqlite;
 using System.IO;
 
 string target = Directory.GetCurrentDirectory() + "/data";
-Console.WriteLine("The current directory is {0}", Directory.GetCurrentDirectory());
 if (!Directory.Exists(target))
 {
     Directory.CreateDirectory(target);
@@ -10,19 +9,10 @@ if (!Directory.Exists(target))
 
 // Change the current directory.
 Environment.CurrentDirectory = (target);
-Console.WriteLine("Now, the current directory is {0}", Directory.GetCurrentDirectory());
 
 //Setup the database.
 List<string> TablesSql = new List<string>();
 #region 
-TablesSql.Add("""
-CREATE TABLE IF NOT EXISTS ApiKeys(
-   Id INTEGER PRIMARY KEY AUTOINCREMENT,
-   Name     TEXT     NOT NULL,
-   KEY      TEXT     NOT NULL,
-   IsDeleted BOOLEAN NOT NULL CHECK (IsDeleted IN (0, 1)) DEFAULT 0
-);
-""");
 
 TablesSql.Add($"""
 CREATE TABLE IF NOT EXISTS {Logs.Error.Table}(
@@ -34,6 +24,11 @@ CREATE TABLE IF NOT EXISTS {Logs.Error.Table}(
 );
 """);
 #endregion
+Authentication.ApiKey.InitialSetup();
+Console.WriteLine("");
+Authentication.ApiKey.PrintAllKeys();
+Console.WriteLine("");
+
 using (var connection = new SqliteConnection(Constants.Conn))
 {
     connection.Open();
@@ -43,8 +38,6 @@ using (var connection = new SqliteConnection(Constants.Conn))
         command.CommandText = Table;
         command.ExecuteNonQuery();
     }
-
-    Console.WriteLine("Admin API Key: NOT IMPLEMENTED");
 }
 
 var TestError = new Logs.Error("Program.cs", "Main", "This is a test message.");
@@ -67,7 +60,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
-
+app.UseMiddleware<Authentication.ApiKeyMiddleware>();
 app.MapGet("/", () => "Logging pinged successful!");
 
 app.MapGet("/Errors", () => {
