@@ -20,7 +20,6 @@ namespace Authentication
         string Name;
         string Key;
         bool IsDeleted;
-        bool IsAdmin = false;
 
         public ApiKey()
         {
@@ -278,7 +277,7 @@ namespace Authentication
                 var command = connection.CreateCommand();
                 command.CommandText = NumRowsQuery;
 
-                object result = command.ExecuteScalar();
+                object? result = command.ExecuteScalar();
                 if (result != null && result != DBNull.Value)
                 {
                     int count = Convert.ToInt32(result);
@@ -325,11 +324,6 @@ namespace Authentication
             string s = " | "; //seperator.
             return Id.ToString() + s + Name + s + Key + s + IsDeleted.ToString();
         }
-    }
-
-    class Admin()
-    {
-
     }
 
     public class ApiKeyMiddleware
