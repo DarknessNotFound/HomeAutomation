@@ -20,6 +20,7 @@ namespace Authentication
         string Name;
         string Key;
         bool IsDeleted;
+        bool IsAdmin = false;
 
         public ApiKey()
         {
@@ -69,17 +70,61 @@ namespace Authentication
 
         public static bool Exists(int Id)
         {
-            return true;
+            bool Result = false;
+            string Query = 
+            $"""
+            SELECT Name
+            FROM {Table}
+            WHERE Id = $Id;
+            """;
+
+            using (var connection = new SqliteConnection(Constants.Conn))
+            {
+                connection.Open();
+
+                var command = connection.CreateCommand();
+                command.CommandText = Query;
+                command.Parameters.AddWithValue("$Id", Id);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    Result = true;
+                }
+            }
+
+            return Result;
         }
 
         public static bool Exists(string Key)
         {
-            return true;
+            bool Result = false;
+            string Query = 
+            $"""
+            SELECT Name
+            FROM {Table}
+            WHERE Key = $Key;
+            """;
+
+            using (var connection = new SqliteConnection(Constants.Conn))
+            {
+                connection.Open();
+
+                var command = connection.CreateCommand();
+                command.CommandText = Query;
+                command.Parameters.AddWithValue("$Key", Key);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    Result = true;
+                }
+            }
+
+            return Result;
         }
 
-        public static bool IsAdmin()
+        public static bool IsAdmin(string Key)
         {
-            return true;
+            return Key == GetApiKey(1).Key;
         }
 
         public void Insert()
@@ -130,7 +175,7 @@ namespace Authentication
             }
         }
 
-        public void Remove()
+        public void Remove(int Id)
         {
             string Query = 
             $"""
@@ -280,6 +325,11 @@ namespace Authentication
             string s = " | "; //seperator.
             return Id.ToString() + s + Name + s + Key + s + IsDeleted.ToString();
         }
+    }
+
+    class Admin()
+    {
+
     }
 
     public class ApiKeyMiddleware
