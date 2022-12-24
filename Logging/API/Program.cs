@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using Authentication;
 using System.IO;
 
 string target = Directory.GetCurrentDirectory() + "/data";
@@ -25,9 +26,7 @@ CREATE TABLE IF NOT EXISTS {Logs.Error.Table}(
 """);
 #endregion
 Authentication.ApiKey.InitialSetup();
-Console.WriteLine("");
 Authentication.ApiKey.PrintAllKeys();
-Console.WriteLine("");
 
 using (var connection = new SqliteConnection(Constants.Conn))
 {
@@ -59,6 +58,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseHttpsRedirection();
 app.UseMiddleware<Authentication.ApiKeyMiddleware>();
 app.MapGet("/", () => "Logging pinged successful!");
@@ -66,5 +66,7 @@ app.MapGet("/", () => "Logging pinged successful!");
 app.MapGet("/Errors", () => {
     return Logs.Error.GetAllErrors().Select(error => error.ToRec()).ToArray();
 });
+
+app.MapApiKeyEndpoints();
 
 app.Run();

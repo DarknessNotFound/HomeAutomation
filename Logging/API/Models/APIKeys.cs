@@ -1,10 +1,12 @@
 using System;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
+using System.Net.Http;
 
 namespace Authentication
 {
     public record ApiKeyRec(int Id, string Name, string Key, bool IsDeleted) {}
-    class ApiKey 
+    public record ApiKey 
     {
         public static readonly string Table = "ApiKeys";
         static readonly string TableCreationQuery = 
@@ -16,15 +18,15 @@ namespace Authentication
             IsDeleted BOOLEAN NOT NULL CHECK (IsDeleted IN (0, 1)) DEFAULT 0
             );
             """;
-        int Id;
-        string Name;
-        string Key;
-        bool IsDeleted;
+        int Id { get; set; }
+        string Name { get; set; }
+        string Key { get; set; }
+        bool IsDeleted { get; set; }
 
         public ApiKey()
         {
             Id = -1;
-            Name = "";
+            Name = "default";
             Key = "";
             IsDeleted = true;
         }
@@ -65,6 +67,19 @@ namespace Authentication
             Name = i.Name;
             Key = i.Key;
             IsDeleted = i.IsDeleted;
+        }
+
+        public ApiKey(ApiKeyRec i)
+        {
+            Id = i.Id;
+            Name = i.Name;
+            Key = i.Key;
+            IsDeleted = i.IsDeleted;
+        }
+
+        public int GetId()
+        {
+            return this.Id;
         }
 
         public static bool Exists(int Id)
@@ -121,6 +136,11 @@ namespace Authentication
             return Result;
         }
 
+        public bool IsValid()
+        {
+            return true;
+        }
+
         public static bool IsAdmin(string Key)
         {
             return Key == GetApiKey(1).Key;
@@ -157,29 +177,36 @@ namespace Authentication
             $"""
             UPDATE {Table}
             SET Name = $Name, 
-                Key = $Key
+                Key = $Key,
+                IsDeleted = $IsDeleted
             WHERE Id = $Id;
             """;
 
-            using (var connection = new SqliteConnection(Constants.Conn))
+            if(ApiKey.Exists(Id))
             {
-                connection.Open();
+                using (var connection = new SqliteConnection(Constants.Conn))
+                {
+                    connection.Open();
 
-                var command = connection.CreateCommand();
-                command.CommandText = Query;
-                command.Parameters.AddWithValue("$Id", Id);
-                command.Parameters.AddWithValue("$Name", Name);
-                command.Parameters.AddWithValue("$Key", Key);
-                var data = command.ExecuteReader();
+                    var command = connection.CreateCommand();
+                    command.CommandText = Query;
+                    command.Parameters.AddWithValue("$Id", Id);
+                    command.Parameters.AddWithValue("$Name", Name);
+                    command.Parameters.AddWithValue("$Key", Key);
+                    command.Parameters.AddWithValue("$IsDeleted", IsDeleted ? 1 : 0);
+                    var data = command.ExecuteReader();
+                }
             }
+            else
+                this.Insert();
         }
 
-        public void Remove(int Id)
+        public static void Remove(int Id)
         {
             string Query = 
             $"""
             UPDATE {Table}
-            SET IsDeleted = 0
+            SET IsDeleted = 1
             WHERE Id = $Id;
             """;
 
@@ -215,12 +242,12 @@ namespace Authentication
                             int.Parse(reader.GetString(0)),
                             reader.GetString(1),
                             reader.GetString(2),
-                            int.Parse(reader.GetString(3)) == 0
+                            int.Parse(reader.GetString(3)) == 1
                         );
                     }
                 }
             }
-
+            Console.WriteLine("GetApiKey: " + Result.ToString());
             return Result;
         }
 
@@ -248,7 +275,7 @@ namespace Authentication
                             int.Parse(reader.GetString(0)),
                             reader.GetString(1),
                             reader.GetString(2),
-                            int.Parse(reader.GetString(3)) == 0
+                            int.Parse(reader.GetString(3)) == 1
                         ));
                     }
                 }
@@ -323,6 +350,84 @@ namespace Authentication
         {
             string s = " | "; //seperator.
             return Id.ToString() + s + Name + s + Key + s + IsDeleted.ToString();
+        }
+    }
+
+    public static class ApiKeyEndpoints
+    {
+        public static void MapApiKeyEndpoints(this WebApplication app)
+        {
+            app.MapGet("/keys", AllKeys);
+            app.MapGet("/keys/deleted", AllKeysIncludeDeleted);
+            app.MapPost("/key/{Name}", NewKey);
+            app.MapGet("/key/{id}", GetKey);
+            app.MapDelete("/key/{id}", RemoveKey);
+            app.MapPut("/key", UpdateKey);
+        }
+
+        public static async Task<IResult> AllKeys()
+        {
+            var result = await Task<List<ApiKeyRec>>.Run( () => ApiKey.GetAllApiKey().Select(x => x.ToRec()).ToArray());
+            return Results.Ok(result);
+        }
+
+        public static async Task<IResult> AllKeysIncludeDeleted()
+        {
+            var result = await Task<List<ApiKeyRec>>.Run( () => ApiKey.GetAllApiKey(IncludeDelete: true).Select(x => x.ToRec()).ToArray());
+            return Results.Ok(result);
+        }
+
+        public static async Task<IResult> NewKey(string Name)
+        {
+            if(string.IsNullOrEmpty(Name))
+                return Results.NoContent();
+            
+            Console.WriteLine("Making a new key: " + Name);
+            ApiKey NewKey = new ApiKey(Name);
+            await Task.Run(() => NewKey.Insert());
+            return Results.Ok(NewKey.ToRec());
+        }
+
+        public static async Task<IResult> RemoveKey(int Id)
+        {
+            if(ApiKey.Exists(Id))
+            {
+                await Task.Run(() => ApiKey.Remove(Id));
+                return Results.Ok();
+            }
+            else
+            {
+                return Results.NotFound();
+            }
+        }
+
+        public static async Task<IResult> GetKey(int Id)
+        {
+            if(ApiKey.Exists(Id))
+            {
+                ApiKey Key = await Task.Run(() => ApiKey.GetApiKey(Id));
+                return Results.Ok(Key.ToRec());
+            }
+            else
+            {
+                return Results.NotFound();
+            }
+        }
+
+        public static async Task<IResult> UpdateKey(ApiKeyRec RecFromRequest)
+        {
+            ApiKey KeyFromRequest = new ApiKey(RecFromRequest);
+            Console.WriteLine(KeyFromRequest.ToString());
+            if(KeyFromRequest.IsValid())
+            {
+                await Task.Run(() => KeyFromRequest.Update());
+                ApiKey UpdatedKey = new ApiKey(KeyFromRequest.GetId());
+                return Results.Ok(UpdatedKey.ToRec());
+            }
+            else
+            {
+                return Results.BadRequest();
+            }
         }
     }
 
